@@ -11,7 +11,7 @@
   body { margin: 0; font: 14px system-ui, sans-serif; }
   [hidden] { display: none !important; }
 </style>
-<title>추억의 블록 오락실</title>
+<title>추억의 테트리스</title>
 <meta name="theme-color" content="#0b0a1a">
 <meta name="mobile-web-app-capable" content="yes">
 <style>
@@ -50,6 +50,17 @@
     padding-block: 8px;
     box-sizing: border-box;
     display: flex; flex-direction: column; gap: 8px;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .credit { font-family: var(--font-pixel); font-size: 9px; color: var(--dim); letter-spacing: .08em; }
+  .credit b { color: var(--marquee); font-weight: normal; }
+  #exitBtn {
+    min-height: 32px; padding: 4px 14px;
+    background: var(--panel); color: var(--ink);
+    border: 2px solid var(--btn-a); border-radius: 6px;
+    font-family: var(--font-ko); font-size: 16px; cursor: pointer;
   }
 
   /* ---------- HUD ---------- */
@@ -128,6 +139,29 @@
     box-shadow: 0 5px 0 #8f1427; cursor: pointer;
   }
   .start:active { transform: translateY(3px); box-shadow: 0 2px 0 #8f1427; }
+  .start.alt { background: var(--btn-dir); box-shadow: 0 5px 0 #1d1940; }
+  .tag { font-size: 22px; color: var(--btn-a); letter-spacing: .1em; }
+  .logo-ko {
+    font-family: var(--font-ko); font-size: clamp(36px, 12vw, 52px); line-height: 1.1;
+    color: var(--marquee); text-shadow: 3px 3px 0 var(--btn-a), 6px 6px 0 rgba(0,0,0,.6);
+  }
+  .logo-ko.intro { animation: drop .7s cubic-bezier(.3,1.6,.5,1) both; }
+  @keyframes drop { from { transform: translateY(-60px) scale(.8); } }
+  .coin {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--font-ko); font-size: 20px;
+    background: var(--btn-dir); color: var(--ink);
+    border: none; border-radius: 6px; padding: 8px 18px;
+    box-shadow: 0 5px 0 #1d1940; cursor: pointer;
+  }
+  .coin:active { transform: translateY(3px); box-shadow: 0 2px 0 #1d1940; }
+  .coin .c {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 35% 35%, #f4f6fa, #a3a9b6);
+    border: 2px solid #6d7280; color: #3a3f4a;
+    font-family: var(--font-pixel); font-size: 7px;
+  }
   .final { font-family: var(--font-pixel); font-size: 12px; line-height: 2; color: var(--ink); }
   .final b { color: var(--marquee); font-weight: normal; }
 
@@ -163,10 +197,14 @@
     .key { width: 50px; height: 50px; }
     .round { width: 58px; height: 58px; }
   }
-  @media (prefers-reduced-motion: reduce) { .blink { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .blink, .logo-ko.intro { animation: none; } }
 </style>
 
 <div id="app">
+  <div class="topbar">
+    <span class="credit">CREDIT <b id="credit">0</b></span>
+    <button id="exitBtn" aria-label="게임 종료">✕ 종료</button>
+  </div>
   <header class="hud">
     <div class="stats">
       <div class="stat"><span class="lbl">SCORE</span><span class="val" id="score">0</span></div>
@@ -185,11 +223,9 @@
     <div class="screen" id="screen">
       <canvas id="board"></canvas>
       <div class="overlay" id="overlay">
-        <div class="logo">BLOCK<br>ARCADE</div>
-        <div class="sub">추억의 오락실 블록 게임</div>
-        <div class="blink">INSERT COIN</div>
-        <button class="start" id="startBtn">동전 넣고 시작</button>
-        <div class="help">화면 탭: 회전 · 좌우 드래그: 이동<br>아래로 드래그: 천천히 · 빠르게 튕기기: 바로 낙하</div>
+        <div class="tag">너구리용</div>
+        <div class="logo-ko intro">추억의<br>테트리스</div>
+        <div class="blink">LOADING...</div>
       </div>
     </div>
   </main>
@@ -361,7 +397,12 @@
   }
 
   /* ---------- game flow ---------- */
+  let credits = 0, splash = true, lastResult = null;
+
   function newGame() {
+    if (credits < 1) return;
+    credits--; updateCredit();
+    mIdx = 0; bassEighth = 0;
     grid = Array.from({ length: H }, () => Array(COLS).fill(0));
     bag = []; score = 0; lines = 0; level = 1;
     nextType = fromBag();
@@ -376,31 +417,89 @@
   function gameOver() {
     state = 'over';
     musicStop(); sfx('over'); buzz(200);
-    const best = score > hi;
-    if (best) { hi = score; try { localStorage.setItem('blockArcadeHi', String(hi)); } catch (e) {} }
-    showOverlay(`
-      <div class="logo">GAME<br>OVER</div>
-      <div class="final">SCORE <b>${score.toLocaleString()}</b><br>LINES <b>${lines}</b> · LV <b>${level}</b></div>
-      ${best ? '<div class="sub">최고 기록 달성!</div>' : ''}
-      <div class="blink">CONTINUE?</div>
-      <button class="start" data-start>다시 하기</button>`);
+    lastResult = { score, lines, level, best: saveHi() };
+    showTitle();
     updateHud();
+  }
+
+  function saveHi() {
+    if (score <= hi) return false;
+    hi = score;
+    try { localStorage.setItem('blockArcadeHi', String(hi)); } catch (e) {}
+    return true;
+  }
+
+  // Title / game-over screen: insert a coin, then push start
+  function showTitle() {
+    splash = false;
+    const r = lastResult;
+    const head = r
+      ? `<div class="logo">GAME<br>OVER</div>
+         <div class="final">SCORE <b>${r.score.toLocaleString()}</b><br>LINES <b>${r.lines}</b> · LV <b>${r.level}</b></div>
+         ${r.best ? '<div class="sub">최고 기록 달성!</div>' : ''}`
+      : `<div class="tag">너구리용</div><div class="logo-ko">추억의<br>테트리스</div>`;
+    const go = credits
+      ? `<div class="blink">PUSH START</div><button class="start" data-start>▶ 게임 시작</button>`
+      : `<div class="blink">${r ? 'CONTINUE? INSERT COIN' : 'INSERT COIN'}</div>`;
+    showOverlay(`${head}
+      <div class="final">CREDIT <b>${credits}</b></div>
+      ${go}
+      <button class="coin" data-coin><span class="c">100</span>동전 넣기</button>
+      ${r ? '' : '<div class="help">화면 탭: 회전 · 좌우 드래그: 이동<br>아래로 드래그: 천천히 · 빠르게 튕기기: 바로 낙하</div>'}`);
+  }
+
+  function insertCoin() {
+    audioInit();
+    credits = Math.min(9, credits + 1);
+    sfx('coin'); buzz(20);
+    updateCredit();
+    if (state === 'title' || state === 'over') showTitle();
+  }
+  function updateCredit() { $('credit').textContent = credits; }
+
+  // Ends the current game and returns to the title screen
+  function goTitle() {
+    musicStop();
+    if (grid) saveHi();
+    state = 'title'; grid = null; piece = null; clearRows = []; lastResult = null;
+    score = 0; lines = 0; level = 1; nextType = null; softDrop = false;
+    drawNext(); updateHud();
+    showTitle();
+  }
+
+  function askExit() {
+    if (state === 'play' || state === 'clear') pause();
+    showOverlay(`
+      <div class="logo">EXIT?</div>
+      <div class="sub">게임을 종료할까요?</div>
+      <button class="start" data-exit-yes>종료하기</button>
+      <button class="start alt" data-exit-no>취소</button>`);
+  }
+  function exitGame() {
+    musicStop();
+    if (grid) saveHi();
+    // Inside the Android app this closes the app; on the web it returns to the title screen
+    if (window.Android && typeof window.Android.exitApp === 'function') { window.Android.exitApp(); return; }
+    goTitle();
   }
 
   function pause() {
     if (state === 'play' || state === 'clear') {
       state = 'pause:' + state;
       musicStop();
-      showOverlay(`
-        <div class="logo">PAUSE</div>
-        <div class="sub">잠시 멈춤</div>
-        <button class="start" data-resume>▶ 계속하기</button>
-        <button class="start" data-start style="background:var(--btn-dir);box-shadow:0 5px 0 #1d1940">처음부터</button>`);
+      showPauseOverlay();
       softDrop = false;
       paintPause();
     } else if (state.startsWith('pause:')) {
       resume();
     }
+  }
+  function showPauseOverlay() {
+    showOverlay(`
+      <div class="logo">PAUSE</div>
+      <div class="sub">잠시 멈춤</div>
+      <button class="start" data-resume>▶ 계속하기</button>
+      <button class="start alt" data-title>처음 화면으로</button>`);
   }
   function resume() {
     if (!state.startsWith('pause:')) return;
@@ -424,9 +523,16 @@
   }
 
   overlay.addEventListener('click', e => {
-    if (e.target.closest('[data-start]') || e.target.id === 'startBtn') newGame();
-    else if (e.target.closest('[data-resume]')) resume();
+    const t = e.target;
+    if (t.closest('[data-start]')) newGame();
+    else if (t.closest('[data-coin]')) insertCoin();
+    else if (t.closest('[data-resume]')) resume();
+    else if (t.closest('[data-title]')) goTitle();
+    else if (t.closest('[data-exit-yes]')) exitGame();
+    else if (t.closest('[data-exit-no]')) { if (state.startsWith('pause:')) showPauseOverlay(); else showTitle(); }
+    else if (splash) showTitle();
   });
+  $('exitBtn').addEventListener('click', askExit);
 
   function updateHud() {
     paintPause();
@@ -609,7 +715,11 @@
   document.addEventListener('keydown', e => {
     const k = e.key;
     if (['ArrowLeft','ArrowRight','ArrowDown','ArrowUp',' '].includes(k)) e.preventDefault();
-    if (state === 'title' || state === 'over') { if (k === 'Enter' || k === ' ') newGame(); return; }
+    if (k === 'c' || k === 'C' || k === '5') { insertCoin(); return; }
+    if (state === 'title' || state === 'over') {
+      if (k === 'Enter' || k === ' ' || k === '1') { if (splash) showTitle(); else newGame(); }
+      return;
+    }
     if (k === 'p' || k === 'P' || k === 'Escape') { pause(); return; }
     if (held.has(k)) return;
     held.add(k);
@@ -672,6 +782,7 @@
     if (!actx || !soundOn) return;
     const t = actx.currentTime;
     switch (kind) {
+      case 'coin': tone(hz(83), t, .08, 'square', .1); tone(hz(88), t + .08, .35, 'square', .1); break;
       case 'move': tone(hz(84), t, .03, 'square', .04); break;
       case 'rotate': tone(hz(88), t, .05, 'square', .06); break;
       case 'lock': tone(hz(48), t, .08, 'triangle', .2); break;
@@ -722,10 +833,8 @@
   let lock_ = null;
   async function wake() { try { lock_ = await navigator.wakeLock?.request('screen'); } catch (e) {} }
 
-  // reset music position each new game
-  const startBtn = $('startBtn');
-  startBtn && startBtn.addEventListener('click', () => { mIdx = 0; bassEighth = 0; });
-  overlay.addEventListener('click', e => { if (e.target.closest('[data-start]')) { mIdx = 0; bassEighth = 0; } }, true);
+  // Splash title first, then the coin screen
+  setTimeout(() => { if (splash) showTitle(); }, 2200);
 
   window.addEventListener('resize', resize);
   if (window.ResizeObserver) new ResizeObserver(resize).observe($('well'));

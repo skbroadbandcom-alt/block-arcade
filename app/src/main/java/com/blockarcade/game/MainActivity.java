@@ -9,6 +9,7 @@ import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
@@ -37,6 +38,14 @@ public class MainActivity extends Activity {
         s.setAllowFileAccess(true);
         s.setSupportZoom(false);
         s.setTextZoom(100);                 // ignore the phone's font-size setting
+
+        // Lets the game's "종료" button close the app
+        webView.addJavascriptInterface(new Object() {
+            @JavascriptInterface
+            public void exitApp() {
+                runOnUiThread(MainActivity.this::finishAndRemoveTask);
+            }
+        }, "Android");
 
         setContentView(webView);
         hideSystemBars();
