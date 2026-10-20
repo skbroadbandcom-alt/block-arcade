@@ -11,8 +11,8 @@ android {
         minSdk 26
         targetSdk 34
         // CI passes the run number so every build installs over the previous one
-        versionCode (System.getenv('VERSION_CODE') ?: '1').toInteger()
-        versionName "1.${System.getenv('VERSION_CODE') ?: '0'}"
+        versionCode = Integer.parseInt(System.getenv('VERSION_CODE') ?: '1')
+        versionName = "1.${System.getenv('VERSION_CODE') ?: '0'}"
     }
 
     // A fixed key in the repo keeps the signature stable, so updates install over
