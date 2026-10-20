@@ -172,7 +172,9 @@
     padding: 12px 14px;
     touch-action: none;
   }
-  .dir { display: flex; gap: 8px; }
+  /* The three direction keys share all the space left of the rotate button, so both thumbs reach them easily */
+  .dir { flex: 1; min-width: 0; display: flex; gap: 10px; }
+  .dir .key { flex: 1; width: auto; height: 64px; font-size: 24px; }
   .act { display: flex; gap: 14px; align-items: center; }
   .key {
     width: 58px; height: 58px; border-radius: 10px;
@@ -188,13 +190,12 @@
   }
   .round small { font-family: var(--font-pixel); font-size: 9px; opacity: .8; }
   .key.a { background: var(--btn-a); box-shadow: 0 5px 0 #8f1427; }
-  .key.b { background: var(--btn-b); color: #2a1d00; box-shadow: 0 5px 0 #9a7300; }
   .key.on { transform: translateY(4px); box-shadow: 0 1px 0 #1d1940; }
   .key.a.on { box-shadow: 0 1px 0 #8f1427; }
-  .key.b.on { box-shadow: 0 1px 0 #9a7300; }
   button:focus-visible { outline: 3px solid var(--marquee); outline-offset: 2px; }
   @media (max-width: 360px) {
     .key { width: 50px; height: 50px; }
+    .dir .key { height: 58px; }
     .round { width: 58px; height: 58px; }
   }
   @media (prefers-reduced-motion: reduce) { .blink, .logo-ko.intro { animation: none; } }
@@ -237,7 +238,6 @@
       <button class="key" data-act="right" aria-label="오른쪽">▶</button>
     </div>
     <div class="act">
-      <button class="key round b" data-act="drop" aria-label="바로 낙하">낙하<small>B</small></button>
       <button class="key round a" data-act="rotate" aria-label="회전">회전<small>A</small></button>
     </div>
   </footer>
