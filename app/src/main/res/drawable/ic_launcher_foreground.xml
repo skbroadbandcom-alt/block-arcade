@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Red T-piece over a cyan I-bar, inside the 66dp adaptive-icon safe zone -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#E8344E" android:pathData="M31,30h15v15h-15z M47,30h15v15h-15z M63,30h15v15h-15z M47,46h15v15h-15z" />
+    <path android:fillColor="#FF8FA0" android:pathData="M31,30h15v3h-15z M47,30h15v3h-15z M63,30h15v3h-15z M47,46h15v3h-15z" />
+    <path android:fillColor="#33D6E8" android:pathData="M23,63h15v15h-15z M39,63h15v15h-15z M55,63h15v15h-15z M71,63h15v15h-15z" />
+    <path android:fillColor="#A6F0F7" android:pathData="M23,63h15v3h-15z M39,63h15v3h-15z M55,63h15v3h-15z M71,63h15v3h-15z" />
+</vector>
