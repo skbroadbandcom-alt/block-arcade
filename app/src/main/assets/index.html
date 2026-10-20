@@ -172,9 +172,10 @@
     padding: 12px 14px;
     touch-action: none;
   }
-  /* Direction keys stretch to fill the row (rotate sits between ▼ and ▶), so both thumbs reach them easily */
-  .dir { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
-  .dir .key:not(.round) { flex: 1; width: auto; height: 64px; font-size: 24px; }
+  /* The three direction keys share all the space left of the rotate button, so both thumbs reach them easily */
+  .dir { flex: 1; min-width: 0; display: flex; gap: 10px; }
+  .dir .key { flex: 1; width: auto; height: 64px; font-size: 24px; }
+  .act { display: flex; gap: 14px; align-items: center; }
   .key {
     width: 58px; height: 58px; border-radius: 10px;
     background: var(--btn-dir); color: var(--ink);
@@ -183,7 +184,6 @@
     display: flex; align-items: center; justify-content: center;
   }
   .round {
-    flex: none;
     width: 66px; height: 66px; border-radius: 50%;
     flex-direction: column; gap: 2px;
     font-family: var(--font-ko); font-size: 15px;
@@ -195,7 +195,7 @@
   button:focus-visible { outline: 3px solid var(--marquee); outline-offset: 2px; }
   @media (max-width: 360px) {
     .key { width: 50px; height: 50px; }
-    .dir .key:not(.round) { height: 58px; }
+    .dir .key { height: 58px; }
     .round { width: 58px; height: 58px; }
   }
   @media (prefers-reduced-motion: reduce) { .blink, .logo-ko.intro { animation: none; } }
@@ -235,8 +235,10 @@
     <div class="dir">
       <button class="key" data-act="left" aria-label="왼쪽">◀</button>
       <button class="key" data-act="down" aria-label="아래">▼</button>
-      <button class="key round a" data-act="rotate" aria-label="회전">회전<small>A</small></button>
       <button class="key" data-act="right" aria-label="오른쪽">▶</button>
+    </div>
+    <div class="act">
+      <button class="key round a" data-act="rotate" aria-label="회전">회전<small>A</small></button>
     </div>
   </footer>
 </div>
